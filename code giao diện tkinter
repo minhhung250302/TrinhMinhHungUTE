@@ -1,0 +1,90 @@
+from tkinter import *
+from PIL import Image, ImageTk
+from tkinter import ttk
+from tkinter.filedialog import *
+from tkinter.messagebox import *
+import time
+import numpy as np
+import os
+from tensorflow.keras.utils import load_img, img_to_array
+from keras.models import load_model
+import matplotlib.pyplot as plt
+file =''
+Label1 = ''
+model_CNN = ''
+os.environ['TF CPP MIN LOG LEVEL'] = '2'
+model_CNN = load_model('nhaccutest.h5')
+wd1 = Tk()
+wd1.geometry('700x500+370+80')
+wd1.title('Nhận diện Nhạc cụ Dân tộc Việt Nam')
+wd1.iconbitmap('projectnhaccu/ic.ico')
+wd1.resizable(False,False)
+canvas_wd1 = Canvas(wd1, width=1000, height=800)
+bg_wd1 = Image.open('projectnhaccu/bg.png')
+n_bg_wd1 = bg_wd1.resize((700,500),Image.Resampling.LANCZOS)
+open_n_bg_wd1 = ImageTk.PhotoImage(n_bg_wd1)
+canvas_wd1.create_image(0, 0, anchor=NW, image=open_n_bg_wd1)
+canvas_wd1.pack()
+def open_wd2():
+	wd2 = Toplevel(wd1)
+	wd2.title('Nhận diện Nhạc cụ Dân tộc Việt Nam')
+	wd2.iconbitmap('projectnhaccu/ic.ico')
+	wd2.geometry('1000x500')
+	wd2.resizable(False, False)
+	LB_wd2 = LabelFrame(wd2,bg = 'dark turquoise', width=1000, height=2000)
+	LB_wd2.pack()
+	fr_wd2 = Frame(LB_wd2,bg = 'old lace', width = 490,height = 400)
+	fr_wd2.place(x=3,y=50)
+	Label2 = Label(LB_wd2,text = "Kết quả:",font = ('Arial',16),bg = 'white smoke').place( x = 500, y = 100)
+	Label2_value = Entry(LB_wd2,width = 20,font = ('Arial',16))
+	Label2_value.place( x = 650, y = 100)
+	wd1.withdraw()
+	wd2.deiconify()
+	def open_file():
+		cancel()
+		global file,Label1
+		file = askopenfilename(defaultextension = '.jpg',filetypes = [('All Files','*.*'),('JPG Files','*.jpg'),('PNG Files','*.png')])
+		if file == '':
+			showinfo('Chú ý !','Hãy chọn hình ảnh')
+		else:
+			openfile = Image.open(file)
+			n_openfile = openfile.resize((485,400), Image.Resampling.LANCZOS)
+			showfile = ImageTk.PhotoImage(n_openfile)
+			Label1 = Label(fr_wd2,image = showfile)
+			Label1.pack()
+			mainloop()
+	def cancel():
+		global Label1,Frame1,file
+		if Label1 == '':
+			return
+		else:
+			Label1.destroy()
+		file = ''
+		fr_wd2.configure()
+		Label2_value.delete(0,END)
+	def check():
+		global file,model_CNN
+		if file =='':
+			showinfo('Chú ý !','Hãy chọn hình ảnh')
+		else:
+			img = load_img(file,target_size =(150,150))
+			img = img_to_array(img)
+			img = img.astype('float32')
+			img = img/255
+			img = np.expand_dims(img,axis=0)
+			result = model_CNN.predict(img)
+			classname = ['Cồng Chiêng', 'Đàn đoản','Đàn nhị (Đàn cò)','Đàn tì bà','Đàn Tranh','Khèn','Sáo Trúc','Đàn đá']
+			for i in range (0,4):
+				if round(result[0][i])== 1:
+					prediction = classname[i]
+			a = f" {prediction}"
+			Label2_value.insert(0,a)
+	button_check=Button(LB_wd2,bg = 'light goldenrod',text='KIỂM TRA',command = check)
+	button_check.place(x=500,y=250)
+	button_choose=Button(LB_wd2,bg = 'light goldenrod',text='CHỌN HÌNH',command = open_file)
+	button_choose.place(x=500,y=200)
+	button_cancel = Button(LB_wd2,bg = 'light goldenrod', text='KẾT THÚC', command= cancel)
+	button_cancel.place(x=500, y=300)
+button_next = Button(wd1,bg = 'cornsilk2', text='BẮT ĐẦU', command=open_wd2, width = 15)
+button_next.place(x=360, y=287)
+mainloop()
